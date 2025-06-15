@@ -1,9 +1,12 @@
 {
-  description = "Basic flake for devShell";
+  description = "NixOS for Chromebook kukui";
 
   inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
     mt81xx-kernel = {
       url = "github:hexdump0815/linux-mainline-mediatek-mt81xx-kernel";
       flake = false;
@@ -19,42 +22,19 @@
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      flake-utils,
-      ...
-    }@inputs:
-    {
-      nixosConfigurations.kukui = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        specialArgs = {
-          inherit inputs;
-          inherit (self) overlays;
-        };
-        modules = [
-          ./nixosModules/cros-sd-image.nix
-          ./nixosModules/hardware-config.nix
-          ./nixosConfigurations/kukui.nix
-        ];
-      };
-      overlays = {
-        allow-missing-kmodules = import ./overlays/allow-missing-kmodules.nix;
-      };
-    }
-    // flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-        };
-      in
+    inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } (
+      { lib, ... }:
       {
-        devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            git
-          ];
-        };
+        imports =
+          ./flake-modules
+          |> lib.fileset.fileFilter (file: file.hasExt "nix" && !lib.hasPrefix "_" file.name)
+          |> lib.fileset.toList;
+
+        systems = [
+          "x86_64-linux"
+          "aarch64-linux"
+        ];
       }
     );
 }

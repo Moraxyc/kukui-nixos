@@ -1,7 +1,6 @@
 {
   pkgs,
   inputs,
-  overlays,
   ...
 }:
 let
@@ -11,13 +10,13 @@ let
     url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${kernelVer}.tar.xz";
     hash = "sha256-6KCZGCVirs/3gd5yznaUYecG2Xr0LXQN/yDrRQ3Vdx4=";
   };
-  listPatches = pkgs.callPackage ../packages/list-patches.nix { };
+  listPatches = pkgs.callPackage ../../packages/list-patches.nix { };
   kukui-kernel = pkgs.linuxManualConfig {
     version = kernelVer;
     modDirVersion = "${kernelVer}-stb-cbm";
     src = kernelSrc;
     allowImportFromDerivation = true;
-    configfile = pkgs.callPackage ../packages/merge-config.nix {
+    configfile = pkgs.callPackage ../../packages/merge-config.nix {
       inherit kernelSrc;
       arch = "arm64";
       extraConfigs = [
@@ -29,7 +28,7 @@ let
         "${kernel-config-options}/additional-options-generic.cfg"
         "${kernel-config-options}/additional-options-aarch64.cfg"
         "${mt81xx-kernel}/misc.cbm/options/additional-options-special.cfg"
-        ../make-nixos-happy.cfg
+        ./make-nixos-happy.cfg
       ];
     };
     kernelPatches = (listPatches "${mt81xx-kernel}/misc.cbm/patches/v6.12") ++ [
@@ -46,8 +45,4 @@ let
 in
 {
   boot.kernelPackages = pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor kukui-kernel);
-
-  system.stateVersion = "25.05";
-
-  nixpkgs.overlays = builtins.attrValues overlays;
 }

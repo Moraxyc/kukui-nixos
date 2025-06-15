@@ -12,7 +12,7 @@ let
     volumeLabel = rootVolumeLabel;
     compressImage = config.crosSdImage.compressImage;
   };
-  kpartImage = pkgs.callPackage ../packages/kpart.nix {
+  kpartImage = pkgs.callPackage ../../packages/kpart.nix {
     kernelParams = config.boot.kernelParams ++ [ "init=${config.system.build.toplevel}/init" ];
     inherit (config.boot.kernelPackages) kernel;
     dtbFilter = [
